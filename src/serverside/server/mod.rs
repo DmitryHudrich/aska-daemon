@@ -5,6 +5,7 @@ use hyper::{
     body::Bytes, server::conn::http1, service::service_fn, Method, Request, Response, StatusCode,
 };
 use hyper_util::rt::TokioIo;
+use serde::Serialize;
 use tokio::net::TcpListener;
 
 use crate::service::fetchservice::SystemFetch;
@@ -34,7 +35,7 @@ async fn router(
     req: Request<hyper::body::Incoming>,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
     match (req.method(), req.uri().path()) {
-        (&Method::GET, "/") => Ok(Response::new(full(serde_json::to_string(&SystemFetch::new()).unwrap()))),
+        (&Method::GET, "/") => ok(&SystemFetch::new()),
 
         _ => {
             let mut not_found = Response::new(empty());
@@ -42,6 +43,10 @@ async fn router(
             Ok(not_found)
         }
     }
+}
+
+fn ok<T>(result: &T) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> where T: Serialize {
+    Ok(Response::new(full(serde_json::to_string(result).unwrap())))
 }
 
 fn empty() -> BoxBody<Bytes, hyper::Error> {
