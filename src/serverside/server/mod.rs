@@ -7,6 +7,8 @@ use hyper::{
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
+use crate::service::fetchservice::SystemFetch;
+
 pub async fn launch_server() -> Result<(), Box<dyn std::error::Error>> {
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     let listener = TcpListener::bind(addr).await?;
@@ -32,7 +34,7 @@ async fn router(
     req: Request<hyper::body::Incoming>,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
     match (req.method(), req.uri().path()) {
-        (&Method::GET, "/") => Ok(Response::new(full("Try POSTing data to /echo"))),
+        (&Method::GET, "/") => Ok(Response::new(full(serde_json::to_string(&SystemFetch::new()).unwrap()))),
 
         _ => {
             let mut not_found = Response::new(empty());

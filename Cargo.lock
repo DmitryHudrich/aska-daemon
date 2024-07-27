@@ -84,6 +84,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "log",
+ "serde",
  "serde_json",
  "tokio",
 ]

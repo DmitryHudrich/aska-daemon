@@ -3,6 +3,7 @@ extern crate log;
 extern crate env_logger;
 
 mod server;
+pub mod service;
 
 #[tokio::main]
 async fn main() {
