@@ -35,7 +35,7 @@ async fn router(
     req: Request<hyper::body::Incoming>,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
     match (req.method(), req.uri().path()) {
-        (&Method::GET, "/") => ok(&SystemFetch::new()),
+        (&Method::GET, "/fetch") => ok(&SystemFetch::new()),
 
         _ => {
             let mut not_found = Response::new(empty());
