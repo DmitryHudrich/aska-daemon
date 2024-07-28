@@ -2,13 +2,16 @@ use std::net::SocketAddr;
 
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use hyper::{
-    body::Bytes, server::conn::http1, service::service_fn, Method, Request, Response, StatusCode,
+    body::Bytes, server::conn::http1, Method, Request, Response, StatusCode,
 };
 use hyper_util::rt::TokioIo;
 use serde::Serialize;
 use tokio::net::TcpListener;
-
+use tower::ServiceBuilder;
+use middlewares::logging;
 use crate::service::fetchservice::SystemFetch;
+
+mod middlewares;
 
 pub async fn launch_server() -> Result<(), Box<dyn std::error::Error>> {
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -17,15 +20,13 @@ pub async fn launch_server() -> Result<(), Box<dyn std::error::Error>> {
 
     loop {
         let (stream, _) = listener.accept().await?;
-
         let io = TokioIo::new(stream);
-
-        tokio::task::spawn(async move {
-            if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service_fn(router))
-                .await
-            {
-                warn!("Error serving connection: {:?}", err);
+        tokio::spawn(async move {
+            // N.B. should use hyper service_fn here, since it's required to be implemented hyper Service trait!
+            let svc = hyper::service::service_fn(router);
+            let svc = ServiceBuilder::new().layer_fn(logging::Logger::new).service(svc);
+            if let Err(err) = http1::Builder::new().serve_connection(io, svc).await {
+                warn!("server error: {}", err);
             }
         });
     }
@@ -45,7 +46,10 @@ async fn router(
     }
 }
 
-fn ok<T>(result: &T) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> where T: Serialize {
+fn ok<T>(result: &T) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error>
+where
+    T: Serialize,
+{
     Ok(Response::new(full(serde_json::to_string(result).unwrap())))
 }
 
