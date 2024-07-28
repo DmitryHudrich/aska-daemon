@@ -3,6 +3,7 @@ extern crate log;
 extern crate env_logger;
 
 use std::io::Write;
+use chrono::Local;
 use colored::{ColoredString, Colorize};
 use log::Level;
 
@@ -18,7 +19,7 @@ async fn main() {
 
 fn init_logging() {
     env_logger::Builder::from_default_env()
-        .format(|buf, record| writeln!(buf, "{}:\t{}", colourful_loglevel(record.level()), record.args()))
+        .format(|buf, record| writeln!(buf, "{}{}:\t{}", Local::now().format("%d/%m/%Y %H:%M "), colourful_loglevel(record.level()), record.args()))
         .init();
 
     println!(
