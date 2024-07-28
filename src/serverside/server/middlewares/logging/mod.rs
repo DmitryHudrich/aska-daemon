@@ -9,6 +9,7 @@ impl<S> Logger<S> {
         Logger { inner }
     }
 }
+
 type Req = Request<Incoming>;
 
 impl<S> Service<Req> for Logger<S>
