@@ -2,10 +2,10 @@
 extern crate log;
 extern crate env_logger;
 
-use std::io::Write;
 use chrono::Local;
 use colored::{ColoredString, Colorize};
 use log::Level;
+use std::{env, io::Write};
 
 mod server;
 pub mod service;
@@ -18,15 +18,29 @@ async fn main() {
 }
 
 fn init_logging() {
+    if env::var_os("RUST_LOG").is_none() {
+        log::set_max_level(log::LevelFilter::Info);
+    }
+
     env_logger::Builder::from_default_env()
-        .format(|buf, record| writeln!(buf, "{}{}:\t{}", Local::now().format("%d/%m/%Y %H:%M "), colourful_loglevel(record.level()), record.args()))
+        .filter_level(log::max_level())
+        .format(|buf, record| {
+            writeln!(
+                buf,
+                "{}{}:\t{}",
+                Local::now().format("%d/%m/%Y %H:%M "),
+                colourful_loglevel(record.level()),
+                record.args()
+            )
+        })
         .init();
 
     println!(
         "----------------------------------------------------------------------------------------|"
     );
-    println!("| | | Log level: {}", log::max_level());
-    info!("Logging rabotaet");   
+    println!("-> Log level: {}", log::max_level());
+    println!("\n");
+    info!("Logging rabotaet");
 }
 
 fn colourful_loglevel(level: Level) -> ColoredString {
